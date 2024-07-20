@@ -1,3 +1,14 @@
+## Setup Assumptions
+
+1. This banking systems consits of dataset of properties and their cost and rent from the game Monopoly-Crooked Cash, it needs to be changed with whatever game you want to play.
+2. The rules are based on Monopoly- crooked cash version having differnet options of free hotel, remove hotel, lend and trade based on the community chest and chance card from this game.
+3. This game might not consists of all features like mortgage, houses and add more than 1 house since it was not in monopoly- crooked cash, feel free to modify the code according to your game needs and add new buttons and features.
+4. There are no proper validation and error checks and not responsive, it was made solely for the use of player who is aware of all the rules, look through the code to understand how wach fuction works.
+5. Improve the game and share to get started playing.
+
+
+
+
 This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
 
 ## Getting Started
