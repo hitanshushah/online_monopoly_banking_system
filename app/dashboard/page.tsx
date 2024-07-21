@@ -1,21 +1,23 @@
 "use client";
 
-import { useState } from 'react';
+import { Suspense } from 'react';
+import { AwaitedReactNode, JSXElementConstructor, Key, ReactElement, ReactNode, SetStateAction, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import propertiesData from '../data/properties';
+import { Property } from '../types/Property';
 import { Doughnut } from 'react-chartjs-2';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import { Chart, ArcElement } from 'chart.js';
+import { Chart, ArcElement, TooltipItem } from 'chart.js';
 Chart.register(ArcElement);
 
 const Dashboard: React.FC = () => {
   const searchParams = useSearchParams();
   const search = searchParams.get('players');
-  const initialPlayers = JSON.parse(search).map((player: any) => ({
+  const initialPlayers = search ? JSON.parse(search).map((player: any) => ({
     ...player,
     lentAmounts: {}, // Initialize lent amounts as an empty object
-  }));
+  }))  : [];
   
 
   const [properties, setProperties] = useState(propertiesData);
@@ -76,7 +78,7 @@ const Dashboard: React.FC = () => {
 
   const buyProperty = (propertyName: string) => {
     const property = properties.find(p => p.name.toLowerCase() === propertyName.toLowerCase());
-    const playerIndex = players.findIndex(p => p.name === selectedPlayer);
+    const playerIndex = players.findIndex((p: { name: string | null; }) => p.name === selectedPlayer);
     if (property && playerIndex !== -1 && property.owner === 'bank') {
       if (players[playerIndex].funds >= property.cost) {
         // Deduct the cost from the player's funds
@@ -85,7 +87,7 @@ const Dashboard: React.FC = () => {
 
         // Update the property's owner
         const updatedProperties = properties.map(p =>
-          p.name === property.name ? { ...p, owner: selectedPlayer } : p
+          p.name === property.name ? { ...p, owner: selectedPlayer || '' } : p
         );
 
         setProperties(updatedProperties);
@@ -108,7 +110,7 @@ const Dashboard: React.FC = () => {
   };
 
   const buyHotel = (property: any) => {
-    const playerIndex = players.findIndex(p => p.name === selectedPlayer);
+    const playerIndex = players.findIndex((p: { name: string | null; }) => p.name === selectedPlayer);
 
     // Check if property already has a hotel
     if (property.hasHotel) {
@@ -142,7 +144,7 @@ const Dashboard: React.FC = () => {
   };
 
   const sellHotel = (property: any) => {
-    const playerIndex = players.findIndex(p => p.name === selectedPlayer);
+    const playerIndex = players.findIndex((p: { name: string | null; }) => p.name === selectedPlayer);
 
     if (property.hasHotel) {
       const hotelCost = property.hotel_cost;
@@ -172,7 +174,7 @@ const Dashboard: React.FC = () => {
   };
 
   const sellProperty = (property: any) => {
-    const playerIndex = players.findIndex(p => p.name === selectedPlayer);
+    const playerIndex = players.findIndex((p: { name: string | null; }) => p.name === selectedPlayer);
 
     if (!property.hasHotel) {
       const propertyCost = property.cost;
@@ -241,8 +243,8 @@ const Dashboard: React.FC = () => {
     }
   
     const property = properties.find(p => p.name === propertyToTrade.name);
-    const playerIndex = players.findIndex(p => p.name === selectedPlayer);
-    const secondaryPlayerIndex = players.findIndex(p => p.name === secondaryPlayer);
+    const playerIndex = players.findIndex((p: { name: string | null; }) => p.name === selectedPlayer);
+    const secondaryPlayerIndex = players.findIndex((p: { name: string; }) => p.name === secondaryPlayer);
   
     if (property && playerIndex !== -1 && secondaryPlayerIndex !== -1) {
       // Perform the trade logic
@@ -291,10 +293,15 @@ const Dashboard: React.FC = () => {
       toast.error("Please select a player and a property to collect rent from.");
       return;
     }
+    
+    if (!selectedPlayer) {
+      toast.error("Selected player is null or undefined.");
+      return;
+    }
   
     const property = properties.find(p => p.name === activeRentProperty.name);
-    const selectedPlayerIndex = players.findIndex(p => p.name === selectedPlayer);
-    const secondaryPlayerIndex = players.findIndex(p => p.name === secondaryPlayer);
+    const selectedPlayerIndex = players.findIndex((p: { name: string | null; }) => p.name === selectedPlayer);
+    const secondaryPlayerIndex = players.findIndex((p: { name: string; }) => p.name === secondaryPlayer);
   
     if (property && selectedPlayerIndex !== -1 && secondaryPlayerIndex !== -1) {
       const rentAmount = getActiveRent(property, selectedPlayer);
@@ -318,7 +325,7 @@ const Dashboard: React.FC = () => {
   
   const handleBonusClick = () => {
     if (selectedPlayer) {
-      const playerIndex = players.findIndex(p => p.name === selectedPlayer);
+      const playerIndex = players.findIndex((p: { name: string; }) => p.name === selectedPlayer);
       if (playerIndex !== -1) {
         const updatedPlayers = [...players];
         updatedPlayers[playerIndex].funds += 200;
@@ -346,7 +353,7 @@ const Dashboard: React.FC = () => {
 
   const handlePayConfirmation = () => {
     if (selectedPlayer && payAmount && payRecipient) {
-      const playerIndex = players.findIndex(p => p.name === selectedPlayer);
+      const playerIndex = players.findIndex((p: { name: string; }) => p.name === selectedPlayer);
       if (playerIndex === -1) {
         toast.error("Selected player not found.");
         return;
@@ -367,7 +374,7 @@ const Dashboard: React.FC = () => {
           toast.error("Insufficient funds.");
         }
       } else {
-        const recipientIndex = players.findIndex(p => p.name === payRecipient);
+        const recipientIndex = players.findIndex((p: { name: string; }) => p.name === payRecipient);
         if (recipientIndex === -1) {
           toast.error("Recipient player not found.");
           return;
@@ -408,13 +415,13 @@ const Dashboard: React.FC = () => {
 
   const handleLendConfirmation = () => {
     if (selectedPlayer && lendAmount && lendRecipient) {
-      const playerIndex = players.findIndex(p => p.name === selectedPlayer);
+      const playerIndex = players.findIndex((p: { name: string; }) => p.name === selectedPlayer);
       if (playerIndex === -1) {
         toast.error("Selected player not found.");
         return;
       }
   
-      const recipientIndex = players.findIndex(p => p.name === lendRecipient);
+      const recipientIndex = players.findIndex((p: { name: string; }) => p.name === lendRecipient);
       if (recipientIndex === -1) {
         toast.error("Recipient player not found.");
         return;
@@ -450,7 +457,7 @@ const Dashboard: React.FC = () => {
   
   const handleRepayClick = () => {
     if (selectedPlayer) {
-      const player = players.find(p => p.name === selectedPlayer);
+      const player = players.find((p: { name: string; }) => p.name === selectedPlayer);
       if (player && player.debt > 0) {
         setRepayPopupVisible(true);
       } else {
@@ -465,8 +472,8 @@ const Dashboard: React.FC = () => {
 
   const handleRepayConfirmation = () => {
     if (selectedPlayer && repayAmount && repayRecipient) {
-      const playerIndex = players.findIndex(p => p.name === selectedPlayer);
-      const recipientIndex = players.findIndex(p => p.name === repayRecipient);
+      const playerIndex = players.findIndex((p: { name: string; }) => p.name === selectedPlayer);
+      const recipientIndex = players.findIndex((p: { name: string; }) => p.name === repayRecipient);
   
       if (playerIndex === -1 || recipientIndex === -1) {
         toast.error("Player or recipient not found.");
@@ -523,7 +530,7 @@ const Dashboard: React.FC = () => {
 
   const handleAddFundsConfirmation = () => {
     if (selectedPlayer && addFundsAmount) {
-      const playerIndex = players.findIndex(p => p.name === selectedPlayer);
+      const playerIndex = players.findIndex((p: { name: string; }) => p.name === selectedPlayer);
       if (playerIndex !== -1) {
         const updatedPlayers = [...players];
         updatedPlayers[playerIndex].funds += addFundsAmount;
@@ -586,7 +593,7 @@ const Dashboard: React.FC = () => {
   const handleAuctionSubmit = () => {
     if (selectedPlayer && selectedProperty && auctionAmount !== null) {
       // Deduct the auction amount from the player's funds
-      const updatedPlayers = players.map(player => {
+      const updatedPlayers = players.map((player: { name: string; funds: number; }) => {
         if (player.name === selectedPlayer) {
           return { ...player, funds: player.funds - auctionAmount };
         }
@@ -613,7 +620,7 @@ const Dashboard: React.FC = () => {
     }
   };
 
-  const getPropertyCount = (playerName) => {
+  const getPropertyCount = (playerName: string) => {
     return properties.filter(property => property.owner === playerName).length;
   };
   
@@ -677,7 +684,7 @@ const Dashboard: React.FC = () => {
                 <p className="mb-2">Amount Owed:</p>
                 <div className="ml-4">
                   {Object.entries(player.lentAmounts).map(([recipient, amount]) => (
-                    <p key={recipient} className="text-sm">From {recipient}: ${amount}</p>
+                    <p key={recipient} className="text-sm">From {recipient}: ${amount as number }</p>
                   ))}
                 </div>
                 <div className="mt-4">
@@ -698,9 +705,10 @@ const Dashboard: React.FC = () => {
                         },
                         tooltip: {
                           callbacks: {
-                            label: (tooltipItem: any, data: any) => {
-                              const label = data.labels[tooltipItem.dataIndex];
-                              const value = data.datasets[0].data[tooltipItem.dataIndex];
+                            label: function(tooltipItem: TooltipItem<'doughnut'>) {
+                              const dataset = tooltipItem.dataset as any;
+                              const value = dataset.data[tooltipItem.dataIndex];
+                              const label = tooltipItem.label || '';
                               return `${label}: ${Math.round(value * 100)}%`;
                             },
                           },
@@ -822,13 +830,13 @@ const Dashboard: React.FC = () => {
       )}
       <div className="mt-4">
         <h4 className="text-lg font-bold mb-2">Select Player</h4>
-        {players.filter(p => p.name !== selectedPlayer).map((player, index) => (
+        {players.filter((p: { name: string | null; }) => p.name !== selectedPlayer).map((player: { name: number | bigint | boolean | SetStateAction<string | null> | ReactElement<any, string | JSXElementConstructor<any>> | Iterable<ReactNode> | Promise<AwaitedReactNode> | undefined; }, index: Key | null | undefined) => (
           <button
             key={index}
             className={`block w-full mb-2 p-2 rounded ${secondaryPlayer === player.name ? 'bg-green-600' : 'bg-gray-400'} text-white`}
-            onClick={() => setSecondaryPlayer(player.name)}
+            onClick={() => setSecondaryPlayer(player.name as string)}
           >
-            {player.name}
+            {player.name as string}
           </button>
         ))}
       </div>
@@ -845,16 +853,16 @@ const Dashboard: React.FC = () => {
     <div className="bg-white p-6 rounded-lg shadow-lg text-black">
       <h3 className="text-2xl font-bold mb-4">Collect Rent</h3>
       <p className="mb-2">Property: {activeRentProperty?.name}</p>
-      <p className="mb-2">Amount to collect: ${getActiveRent(activeRentProperty, selectedPlayer)}</p>
+      <p className="mb-2">Amount to collect: ${getActiveRent(activeRentProperty, selectedPlayer as string)}</p>
       <div className="mt-4">
         <h4 className="text-lg font-bold mb-2">Select Player</h4>
-        {players.filter(p => p.name !== selectedPlayer).map((player, index) => (
+        {players.filter((p: { name: string | null; }) => p.name !== selectedPlayer).map((player: { name: number | bigint | boolean | SetStateAction<string | null> | ReactElement<any, string | JSXElementConstructor<any>> | Iterable<ReactNode> | Promise<AwaitedReactNode> | undefined; }, index: Key | null | undefined) => (
           <button
             key={index}
             className={`block w-full mb-2 p-2 rounded ${secondaryPlayer === player.name ? 'bg-green-600' : 'bg-gray-400'} text-white`}
-            onClick={() => setSecondaryPlayer(player.name)}
+            onClick={() => setSecondaryPlayer(player.name as string)}
           >
-            {player.name}
+            {player.name as string}
           </button>
         ))}
       </div>
@@ -891,13 +899,13 @@ const Dashboard: React.FC = () => {
         >
           Bank
         </button>
-        {players.filter(p => p.name !== selectedPlayer).map((player, index) => (
+        {players.filter((p: { name: string | null; }) => p.name !== selectedPlayer).map((player: { name: number | bigint | boolean | SetStateAction<string | null> | ReactElement<any, string | JSXElementConstructor<any>> | Iterable<ReactNode> | Promise<AwaitedReactNode> | undefined; }, index: Key | null | undefined) => (
           <button
             key={index}
             className={`block w-full mb-2 p-2 rounded ${payRecipient === player.name ? 'bg-green-600' : 'bg-gray-400'} text-white`}
-            onClick={() => setPayRecipient(player.name)}
+            onClick={() => setPayRecipient(player.name as string)}
           >
-            {player.name}
+            {player.name as string}
           </button>
         ))}
       </div>
@@ -928,13 +936,13 @@ const Dashboard: React.FC = () => {
       </div>
       <div className="mb-4">
         <h4 className="text-lg font-bold mb-2">Select Recipient</h4>
-        {players.filter(p => p.name !== selectedPlayer).map((player, index) => (
+        {players.filter((p: { name: string | null; }) => p.name !== selectedPlayer).map((player: { name: number | bigint | boolean | SetStateAction<string | null> | ReactElement<any, string | JSXElementConstructor<any>> | Iterable<ReactNode> | Promise<AwaitedReactNode> | undefined; }, index: Key | null | undefined) => (
           <button
             key={index}
             className={`block w-full mb-2 p-2 rounded ${lendRecipient === player.name ? 'bg-green-600' : 'bg-gray-400'} text-white`}
-            onClick={() => setLendRecipient(player.name)}
+            onClick={() => setLendRecipient(player.name as string)}
           >
-            {player.name}
+            {player.name as string}
           </button>
         ))}
       </div>
@@ -971,9 +979,9 @@ const Dashboard: React.FC = () => {
           className="block w-full p-2 mt-2 border rounded"
         >
           <option value="">Select a player</option>
-          {players.map((player) => (
+          {players.map((player: { name: boolean | ReactElement<any, string | JSXElementConstructor<any>> | Iterable<ReactNode> | Promise<AwaitedReactNode> | Key | null | undefined; }) => (
             player.name !== selectedPlayer && (
-              <option key={player.name} value={player.name}>{player.name}</option>
+              <option key={player.name as string} value={player.name as string}>{player.name}</option>
             )
           ))}
         </select>
@@ -1102,4 +1110,11 @@ const Dashboard: React.FC = () => {
   );
 };
 
-export default Dashboard;
+
+const DashboardWithSuspense = () => (
+  <Suspense fallback={<div>Loading...</div>}>
+    <Dashboard />
+  </Suspense>
+);
+
+export default DashboardWithSuspense;

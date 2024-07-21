@@ -3,6 +3,8 @@
 import React, { useState } from 'react';
 import { MantineProvider, Select, Input } from '@mantine/core';
 import { useRouter } from 'next/navigation';
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 const Home: React.FC = () => {
   const [numberOfPlayers, setNumberOfPlayers] = useState<number | null>(null);
@@ -28,6 +30,11 @@ const Home: React.FC = () => {
 
   const handleGenerateJSON = async () => {
     const players = [];
+    if (numberOfPlayers === null) {
+      toast.error("Please Select number of players to start the game!");
+      return;
+    }
+
     for (let i = 0; i < numberOfPlayers; i++) {
       const playerName = playerNames[i] || `Player ${i + 1}`;
       players.push({ name: playerName, funds: startingFunds ? parseInt(startingFunds) : 1500, properties: {}, debt: 0 });
@@ -92,6 +99,7 @@ const Home: React.FC = () => {
           </button>
         </div>
       </div>
+      <ToastContainer />
     </MantineProvider>
   );
 };
