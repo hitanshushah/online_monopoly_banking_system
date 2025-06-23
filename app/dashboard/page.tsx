@@ -3,7 +3,7 @@
 import { Suspense } from 'react';
 import { AwaitedReactNode, JSXElementConstructor, Key, ReactElement, ReactNode, SetStateAction, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
-import propertiesData from '../data/properties';
+import { getProperties, GameVersion } from '../data/propertiesManager';
 import { Property } from '../types/Property';
 import { Doughnut } from 'react-chartjs-2';
 import { ToastContainer, toast } from 'react-toastify';
@@ -14,13 +14,15 @@ Chart.register(ArcElement);
 const Dashboard: React.FC = () => {
   const searchParams = useSearchParams();
   const search = searchParams.get('players');
+  const versionParam = searchParams.get('version') as GameVersion || 'fake-cash';
+  
   const initialPlayers = search ? JSON.parse(search).map((player: any) => ({
     ...player,
     lentAmounts: {}, // Initialize lent amounts as an empty object
   }))  : [];
   
 
-  const [properties, setProperties] = useState(propertiesData);
+  const [properties, setProperties] = useState(getProperties(versionParam));
   const [players, setPlayers] = useState(initialPlayers);
   const [selectedPlayer, setSelectedPlayer] = useState<string | null>(null);
   const [selectedProperty, setSelectedProperty] = useState<any | null>(null);
@@ -633,6 +635,11 @@ const Dashboard: React.FC = () => {
   return (
     <div className="flex flex-col items-center min-h-screen bg-gradient-to-br from-gray-900 to-blue-900 text-white">
       <h1 className="text-4xl font-bold mb-8 mt-10">Monopoly Dashboard</h1>
+      <div className="text-lg mb-4 text-center">
+        <span className="bg-blue-600 px-3 py-1 rounded-full text-sm">
+          {versionParam === 'standard' ? 'Standard Monopoly' : 'Fake Cash Version'}
+        </span>
+      </div>
       <p className="text-xl font-bold text-left fixed mt-20 bg-black text-white p-3 rounded-xl opacity-75 ml-[150px] lg:ml-[1100px]">
   Active Player: {selectedPlayer}
 </p>

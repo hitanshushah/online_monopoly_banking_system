@@ -1,6 +1,6 @@
-// data/properties.js
+// data/fakeCashProperties.ts - Fake Cash Version Properties
 
-const properties = [
+const fakeCashProperties = [
     // Brown properties
     {
       name: "Mediterranean Avenue",
@@ -304,5 +304,4 @@ const properties = [
     }
   ];
   
-  export default properties;
-  
+  export default fakeCashProperties; 
